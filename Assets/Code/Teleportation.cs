@@ -10,7 +10,7 @@ public class Teleportation : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         // Mengecek apakah yang masuk ke trigger adalah player
-        if (collision.CompareTag("Player"))
+        if (collision.CompareTag("Player") || collision.CompareTag("Impostor"))
         {
             player = collision.transform;
             canTeleport = true; // Player bisa teleport
@@ -23,7 +23,7 @@ public class Teleportation : MonoBehaviour
     private void OnTriggerExit2D(Collider2D collision)
     {
         // Mengecek apakah yang keluar dari trigger adalah player
-        if (collision.CompareTag("Player"))
+        if (collision.CompareTag("Player") || collision.CompareTag("Impostor"))
         {
             canTeleport = false; // Player tidak bisa teleport lagi
             PlayerMovement playerMovement = player.GetComponent<PlayerMovement>();

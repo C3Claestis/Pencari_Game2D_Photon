@@ -4,9 +4,9 @@ using UnityEngine.UI;
 using Unity.VisualScripting;
 public class PlayerMovement : MonoBehaviourPun, IPunObservable
 {
-    float speed = 5f;
     float dirX;
     float dirY;
+    [SerializeField] float speed;
     [SerializeField] Transform sprite_karakter;
     [SerializeField] Animator animator_karakter;
     [SerializeField] Text nickPlayer;

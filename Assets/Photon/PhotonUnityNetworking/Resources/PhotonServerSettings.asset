@@ -43,6 +43,9 @@ MonoBehaviour:
   - SyncFlip
   - SyncMovement
   - SyncNickname
+  - SpawnObjectWithValue
+  - SetImpostorIndex
+  - SetIndeCountRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

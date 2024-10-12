@@ -116,7 +116,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         Debug.Log(PhotonNetwork.LocalPlayer.NickName + " Bergabung dengan " + PhotonNetwork.CurrentRoom.Name);
         ActivatePanel(GamePanel.name);
 
-        if (PhotonNetwork.LocalPlayer.IsMasterClient)
+        if (PhotonNetwork.LocalPlayer.IsMasterClient && PhotonNetwork.CurrentRoom.MaxPlayers == PhotonNetwork.CurrentRoom.PlayerCount)
         {
             TombolMulaiGame.SetActive(true);
         }
@@ -178,6 +178,12 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         }
 
         daftarPlayerGameobjects.Add(newPlayer.ActorNumber, daftarPlayerGameobject);
+
+        // Periksa ulang apakah pemain MasterClient dan apakah jumlah pemain sudah penuh
+        if (PhotonNetwork.LocalPlayer.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.CurrentRoom.MaxPlayers)
+        {
+            TombolMulaiGame.SetActive(true);
+        }
     }
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
@@ -306,7 +312,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         string roomName = "Room " + Random.Range(1000, 10000);
 
         RoomOptions roomOptions = new RoomOptions();
-        roomOptions.MaxPlayers = 20;
+        roomOptions.MaxPlayers = 5;
 
         PhotonNetwork.CreateRoom(roomName, roomOptions);
     }
