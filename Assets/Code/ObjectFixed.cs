@@ -9,15 +9,17 @@ public class ObjectFixed : MonoBehaviour
     [SerializeField] Image imageBar;
     int MaxBar = 1000;
     float currentBar;
-    float barDecreaseAmount = 10f; // nilai pengurangan bar setiap trigger
+    float barDecreaseAmount = 0.1f; // nilai pengurangan bar setiap trigger
+    float defaultBarDecreasement;
     int playerCount = 0; // penghitung jumlah player dalam collider
     bool canBerkurang = false;
     private Animator parentAnim;
     IndexObjectFixing IndexTreasure;
     bool isFixed = false; // Flag untuk mencegah pengurangan berulang
-
+    public void SetCanBerkurang(bool canBerkurang) => this.canBerkurang = canBerkurang;
     void Start()
     {
+        defaultBarDecreasement = barDecreaseAmount;
         IndexTreasure = FindAnyObjectByType<IndexObjectFixing>();
         currentBar = MaxBar;
         imageBar.fillAmount = currentBar / MaxBar;
@@ -32,6 +34,21 @@ public class ObjectFixed : MonoBehaviour
 
         if (canBerkurang && !isFixed) // Cek apakah objek belum diperbaiki
         {
+            switch (playerCount)
+            {
+                case 0:
+                    barDecreaseAmount = defaultBarDecreasement;
+                    break;
+                case 2:
+                    barDecreaseAmount += 0.1f;
+                    break;
+                case 3:
+                    barDecreaseAmount += 0.2f;
+                    break;
+                case 4:
+                    barDecreaseAmount += 0.4f;
+                    break;
+            }
             currentBar -= barDecreaseAmount;
 
             // memastikan nilai currentBar tidak kurang dari 0
@@ -64,9 +81,14 @@ public class ObjectFixed : MonoBehaviour
         {
             if (currentBar > 0)
             {
+                PlayerMovement player = other.GetComponent<PlayerMovement>();
+                player.SetCanFixing(true);
                 playerCount++; // Tambah jumlah player di dalam collider
-                canBerkurang = true; // Mulai mengurangi bar
             }
+        }
+        if (other.CompareTag("AttackPointPlayer") && !isFixed)
+        {
+            canBerkurang = true;
         }
     }
 
@@ -76,6 +98,8 @@ public class ObjectFixed : MonoBehaviour
         {
             if (currentBar > 0)
             {
+                PlayerMovement player = other.GetComponent<PlayerMovement>();
+                player.SetCanFixing(false);
                 playerCount--; // Kurangi jumlah player di dalam collider
 
                 // Jika tidak ada lagi player di dalam area, stop pengurangan bar
@@ -85,6 +109,10 @@ public class ObjectFixed : MonoBehaviour
                     playerCount = 0; // Jaga agar playerCount tidak negatif
                 }
             }
+        }
+        if (other.CompareTag("AttackPointPlayer") && !isFixed)
+        {
+            canBerkurang = false;
         }
     }
 }
