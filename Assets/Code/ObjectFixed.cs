@@ -7,6 +7,7 @@ public class ObjectFixed : MonoBehaviour
 {
     [SerializeField] GameObject bar;
     [SerializeField] Image imageBar;
+    [SerializeField] GameObject tanda;
     int MaxBar = 1000;
     float currentBar;
     float barDecreaseAmount = 0.1f; // nilai pengurangan bar setiap trigger
@@ -31,7 +32,7 @@ public class ObjectFixed : MonoBehaviour
     {
         // Bar hanya aktif jika ada player dalam collider
         bar.SetActive(playerCount > 0);
-
+        tanda.SetActive(canBerkurang);
         if (canBerkurang && !isFixed) // Cek apakah objek belum diperbaiki
         {
             switch (playerCount)

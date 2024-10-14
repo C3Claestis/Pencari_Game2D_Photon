@@ -83,6 +83,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bar: {fileID: 2807348658475366365}
   imageBar: {fileID: 1653031994186485122}
+  tanda: {fileID: 6353535314283554812}
 --- !u!114 &6618305912141312758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -328,7 +329,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5214911550913840431
 RectTransform:
   m_ObjectHideFlags: 0
