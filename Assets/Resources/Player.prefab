@@ -689,7 +689,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isPlayer: 1
-  speed: 2.5
+  speed: 10
   sprite_karakter: {fileID: 1524406021769001290}
   animator_karakter: {fileID: 6153334268725321893}
   nickPlayer: {fileID: 2938845725244985285}

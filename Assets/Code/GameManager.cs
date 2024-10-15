@@ -10,8 +10,7 @@ public class GameManager : MonoBehaviourPun
     [Header("=========== ATRIBUT PLAYER SPAWN ============")]
     [SerializeField] GameObject playerPrefab; // Player prefab
     [SerializeField] GameObject impostorPrefab; // Impostor prefab
-    [SerializeField] GameObject panelCrew; // Panel Crew
-    [SerializeField] GameObject panelImpostor; // Panel Impostor
+    [SerializeField] GameObject treasureUI;
     [SerializeField] Transform[] pointSpawn;  // Array of spawn points
 
     [Header("=========== ATRIBUT OBJECT FIX SPAWN ============")]
@@ -72,14 +71,13 @@ public class GameManager : MonoBehaviourPun
                 // Instantiate impostor prefab
                 GameObject newImpostor = PhotonNetwork.Instantiate(impostorPrefab.name, spawnPosition, Quaternion.identity);
                 PhotonNetwork.LocalPlayer.TagObject = newImpostor.transform;
-                panelImpostor.SetActive(true);
+                treasureUI.GetComponent<RectTransform>().localScale = new Vector3(0, 0, 0);
             }
             else
             {
                 // Instantiate player prefab
                 GameObject newPlayer = PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, Quaternion.identity);
                 PhotonNetwork.LocalPlayer.TagObject = newPlayer.transform;
-                panelCrew.SetActive(true);
             }
         }
         else
@@ -88,10 +86,6 @@ public class GameManager : MonoBehaviourPun
         }
     }
 
-    void Update()
-    {
-        Debug.Log("PLYER IMPOSTOR = " + impostorIndex);
-    }
     [PunRPC]
     void SetImpostorIndex(int index)
     {

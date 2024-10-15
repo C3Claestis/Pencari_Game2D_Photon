@@ -8,7 +8,7 @@ public class ObjectFixed : MonoBehaviour
     [SerializeField] GameObject bar;
     [SerializeField] Image imageBar;
     [SerializeField] GameObject tanda;
-    int MaxBar = 1000;
+    int MaxBar = 10;
     float currentBar;
     float barDecreaseAmount = 0.1f; // nilai pengurangan bar setiap trigger
     float defaultBarDecreasement;

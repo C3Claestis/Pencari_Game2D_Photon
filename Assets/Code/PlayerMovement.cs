@@ -105,7 +105,7 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
             // Jika minimapItem tidak ada (null), cari di awal atau simpan referensi secara manual
             if (minimapItem == null)
             {
-                Transform minimapPanel = GameObject.Find("Panel-Impostor").transform;
+                Transform minimapPanel = GameObject.Find("Panel-Game").transform;
                 if (minimapPanel.childCount > 0)
                 {
                     minimapItem = minimapPanel.GetChild(0).gameObject;
