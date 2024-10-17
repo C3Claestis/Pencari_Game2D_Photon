@@ -3,6 +3,7 @@ using Photon.Pun;
 using UnityEngine.UI;
 using System;
 using Photon.Realtime;
+using Unity.VisualScripting;
 
 public class PlayerMovement : MonoBehaviourPun, IPunObservable
 {
@@ -33,7 +34,6 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
 
     public void SetKnock(bool knock) => this.isKnock = knock;
     public void SetCanFixing(bool canfix) => this.isCanFixing = canfix;
-
     public bool SetTeleActive(bool teleIcons)
     {
         teleIcon.SetActive(teleIcons);
@@ -204,7 +204,6 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
             sprite_karakter.localScale = new Vector3(1f, 1f, 1f);
         }
     }
-
     [PunRPC]
     void SyncWalking(bool isWalking)
     {
