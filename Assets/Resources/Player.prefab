@@ -696,7 +696,6 @@ MonoBehaviour:
   nickPlayer: {fileID: 2938845725244985285}
   teleIcon: {fileID: 4689111579059449844}
   pointAttack: {fileID: 2308870096888386736}
-  minimapItem: {fileID: 0}
 --- !u!114 &5896973751875885695
 MonoBehaviour:
   m_ObjectHideFlags: 0

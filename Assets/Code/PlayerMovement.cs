@@ -2,8 +2,6 @@ using UnityEngine;
 using Photon.Pun;
 using UnityEngine.UI;
 using System;
-using Photon.Realtime;
-using Unity.VisualScripting;
 
 public class PlayerMovement : MonoBehaviourPun, IPunObservable
 {
@@ -22,7 +20,7 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
     [Header("=========== ATRIBUT ICON AND TRIGGER ===========")]
     [SerializeField] GameObject teleIcon;
     [SerializeField] GameObject pointAttack;
-    [SerializeField] GameObject minimapItem;
+    private GameObject minimapItem;
     private Rigidbody2D rb;
     private GameObject cameraFollow;
     private Vector3 networkPosition;

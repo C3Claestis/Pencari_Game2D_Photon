@@ -4,6 +4,7 @@ using Photon.Pun;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviourPun
 {
@@ -17,6 +18,12 @@ public class GameManager : MonoBehaviourPun
     [SerializeField] GameObject objectPrefab; // Objek fixing prefab
     [SerializeField] Transform[] spawnObjek; // Array of all possible spawn points
 
+    [Header("=========== ATRIBUT UI CREW ============")]
+    [SerializeField] Text crew1;
+    [SerializeField] Text crew2;
+    [SerializeField] Text crew3;
+    [SerializeField] Text crew4;
+    private List<string> crewNames = new List<string>();  // List to hold crew names
     private List<Transform> selectedSpawnPoints = new List<Transform>(); // List of selected spawn points
     private int maxObjectsToSpawn = 1; // Max number of objects to spawn
     private int impostorIndex = -1; // Index untuk impostor
@@ -37,7 +44,7 @@ public class GameManager : MonoBehaviourPun
             StartCoroutine(WaitForAllPlayersToReceiveImpostorIndex());
         }
 
-         // Hanya master client yang memilih dan men-spawn objek
+        // Hanya master client yang memilih dan men-spawn objek
         if (PhotonNetwork.IsMasterClient)
         {
             // Pilih 10 titik spawn secara acak dari array spawnObjek
@@ -110,7 +117,7 @@ public class GameManager : MonoBehaviourPun
         SceneManager.LoadScene(0);
     }
 
-   // Pilih 10 spawn point secara acak dari array spawnObjek
+    // Pilih 10 spawn point secara acak dari array spawnObjek
     void SelectRandomSpawnPoints()
     {
         List<Transform> availablePoints = new List<Transform>(spawnObjek); // Salin array spawnObjek ke list
@@ -183,5 +190,49 @@ public class GameManager : MonoBehaviourPun
         }
 
         return null;
+    }
+
+    public void AddPlayerToCrew(string playerName)
+    {
+        // Cek apakah nama pemain sudah ada dan batas maksimum
+        if (!crewNames.Contains(playerName) && crewNames.Count < 4)
+        {
+            crewNames.Add(playerName);
+
+            // Kirim RPC untuk menambahkan satu nama ke semua klien
+            photonView.RPC("AddCrewNameRPC", RpcTarget.AllBuffered, playerName);
+        }
+    }
+
+    // RPC untuk menambahkan satu nama ke semua klien dan update UI
+    [PunRPC]
+    private void AddCrewNameRPC(string newCrewName)
+    {
+        // Tambahkan nama baru ke list jika belum ada
+        if (!crewNames.Contains(newCrewName))
+        {
+            crewNames.Add(newCrewName);
+        }
+
+        // Update UI text sesuai dengan jumlah crewNames
+        UpdateCrewUI();
+    }
+
+    // Fungsi untuk memperbarui UI berdasarkan daftar crewNames
+    private void UpdateCrewUI()
+    {
+        // Pastikan UI diisi sesuai urutan crewNames
+        if (crewNames.Count > 0) crew1.text = crewNames[0];
+        if (crewNames.Count > 1) crew2.text = crewNames[1];
+        if (crewNames.Count > 2) crew3.text = crewNames[2];
+        if (crewNames.Count > 3) crew4.text = crewNames[3];
+        
+        // Jika kurang dari 4 crew, sisanya kosong
+        if (crewNames.Count < 4) crew4.text = "-";
+        if (crewNames.Count < 3) crew3.text = "-";
+        if (crewNames.Count < 2) crew2.text = "-";
+        if (crewNames.Count < 1) crew1.text = "-";
+
+        Debug.Log("Crew UI Updated: " + string.Join(", ", crewNames));
     }
 }

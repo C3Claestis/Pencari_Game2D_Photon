@@ -52,6 +52,10 @@ MonoBehaviour:
   - SyncSpawnPoints
   - SyncSpawnPointsAndSpawn
   - SetParentForPortal
+  - UpdateCrewList
+  - UpdateCrewUI
+  - HidePlayer
+  - AddCrewNameRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1
