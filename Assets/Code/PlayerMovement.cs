@@ -30,6 +30,7 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
     private bool Fixing;
     private bool isKnock;
 
+    public bool GetKnock() => isKnock;
     public void SetKnock(bool knock) => this.isKnock = knock;
     public void SetCanFixing(bool canfix) => this.isCanFixing = canfix;
     public bool SetTeleActive(bool teleIcons)

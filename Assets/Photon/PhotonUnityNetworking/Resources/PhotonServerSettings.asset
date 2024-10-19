@@ -56,6 +56,9 @@ MonoBehaviour:
   - UpdateCrewUI
   - HidePlayer
   - AddCrewNameRPC
+  - ShowImpostorPanel
+  - ShowImpostorPanelWithDelay
+  - RPC_ShowImpostorPanel
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

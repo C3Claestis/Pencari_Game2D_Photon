@@ -23,6 +23,10 @@ public class GameManager : MonoBehaviourPun
     [SerializeField] Text crew2;
     [SerializeField] Text crew3;
     [SerializeField] Text crew4;
+
+    [Header("=========== ATRIBUT UI IMPOSTOR ============")]
+    [SerializeField] GameObject panelImpostor;
+    private GameObject[] players;
     private List<string> crewNames = new List<string>();  // List to hold crew names
     private List<Transform> selectedSpawnPoints = new List<Transform>(); // List of selected spawn points
     private int maxObjectsToSpawn = 1; // Max number of objects to spawn
@@ -53,6 +57,11 @@ public class GameManager : MonoBehaviourPun
             // Mulai proses spawn objek secara acak
             StartCoroutine(RandomSpawn());
         }
+    }
+
+    void Update()
+    {
+        CheckKnockStatus();
     }
 
     IEnumerator WaitForAllPlayersToReceiveImpostorIndex()
@@ -226,7 +235,7 @@ public class GameManager : MonoBehaviourPun
         if (crewNames.Count > 1) crew2.text = crewNames[1];
         if (crewNames.Count > 2) crew3.text = crewNames[2];
         if (crewNames.Count > 3) crew4.text = crewNames[3];
-        
+
         // Jika kurang dari 4 crew, sisanya kosong
         if (crewNames.Count < 4) crew4.text = "-";
         if (crewNames.Count < 3) crew3.text = "-";
@@ -234,5 +243,49 @@ public class GameManager : MonoBehaviourPun
         if (crewNames.Count < 1) crew1.text = "-";
 
         Debug.Log("Crew UI Updated: " + string.Join(", ", crewNames));
+    }
+
+    void CheckKnockStatus()
+    {
+        // Dapatkan semua pemain dengan tag "Player"
+        players = GameObject.FindGameObjectsWithTag("Player");
+
+        bool allPlayersKnocked = true;  // Asumsikan semua pemain knock
+
+        foreach (GameObject player in players)
+        {
+            // Dapatkan script PlayerMovement pada player
+            PlayerMovement playerMovement = player.GetComponent<PlayerMovement>();
+
+            // Jika ada satu pemain yang tidak knock, ubah nilai allPlayersKnocked menjadi false
+            if (playerMovement != null && !playerMovement.GetKnock())
+            {
+                allPlayersKnocked = false;
+                break; // Tidak perlu cek lebih lanjut, cukup satu player tidak knock
+            }
+        }
+
+        // Kirim RPC untuk menampilkan/menyembunyikan panel impostor sesuai status allPlayersKnocked
+        photonView.RPC("RPC_ShowImpostorPanel", RpcTarget.AllBuffered, allPlayersKnocked);
+    }
+
+
+    [PunRPC]
+    void RPC_ShowImpostorPanel(bool show)
+    {
+        // Jalankan coroutine untuk menampilkan/menyembunyikan panel dengan delay
+        StartCoroutine(ShowImpostorPanelWithDelay(show));
+    }
+
+    IEnumerator ShowImpostorPanelWithDelay(bool show)
+    {
+        if (show)
+        {
+            // Berikan jeda 2 detik sebelum menampilkan panel impostor
+            yield return new WaitForSeconds(2);
+        }
+
+        // Aktifkan atau nonaktifkan panel impostor berdasarkan parameter
+        panelImpostor.SetActive(show);
     }
 }
