@@ -59,6 +59,9 @@ MonoBehaviour:
   - ShowImpostorPanel
   - ShowImpostorPanelWithDelay
   - RPC_ShowImpostorPanel
+  - RPC_ShowCrewPanel
+  - ShowCrewPanelRPC
+  - RPC_ShowCrew
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

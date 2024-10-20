@@ -226,6 +226,12 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
             // Logika ketika terkena knock
             rb.velocity = Vector2.zero;
             animator_karakter.SetBool("Knock", true);
+            // Tambahkan ke CountPlayerKnock jika player knock
+            GameManager gameManager = FindObjectOfType<GameManager>();
+            if (gameManager != null)
+            {
+                gameManager.SetCountPlayerKnock();
+            }
         }
         else
         {
