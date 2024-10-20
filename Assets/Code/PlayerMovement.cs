@@ -231,6 +231,7 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
             if (gameManager != null)
             {
                 gameManager.SetCountPlayerKnock();
+                StartCoroutine(gameManager.WaitForPlayerCrewCountIncrease(0));
             }
         }
         else

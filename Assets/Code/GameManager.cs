@@ -1,13 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Photon.Pun;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviourPun
 {
+    #region ATRIBUT
     [Header("=========== ATRIBUT PLAYER SPAWN ============")]
     [SerializeField] GameObject playerPrefab; // Player prefab
     [SerializeField] GameObject impostorPrefab; // Impostor prefab
@@ -24,19 +25,108 @@ public class GameManager : MonoBehaviourPun
     [SerializeField] Text crew3;
     [SerializeField] Text crew4;
 
-    [Header("=========== ATRIBUT UI IMPOSTOR ============")]
+    [Header("=========== PANEL IMPOSTOR/CREW ============")]
+    [SerializeField] GameObject panelCrew;
     [SerializeField] GameObject panelImpostor;
-    private GameObject[] players;
-    private int CountPlayerKnock;
+    #endregion
+    private GameObject[] playersIndex;
     private List<string> crewNames = new List<string>();  // List to hold crew names
     private List<Transform> selectedSpawnPoints = new List<Transform>(); // List of selected spawn points
     private int maxObjectsToSpawn = 1; // Max number of objects to spawn
     private int impostorIndex = -1; // Index untuk impostor
     private int objectsSpawned = 0; // Counter untuk objek yang telah di-spawn
+    private int playerCrewCount = 0;  // Counter untuk crew yang telah ditambahkan
+
+    public void SetPlayerCrew(int index)
+    {
+        playerCrewCount += index;  // Tambahkan nilai index ke counter
+
+        // Kirim RPC untuk update playerCrewCount di semua klien
+        photonView.RPC("RPC_SetPlayerCrewCount", RpcTarget.AllBuffered, index);
+
+        // Pastikan playersIndex tidak null dan periksa panjangnya
+        if (playersIndex == null)
+        {
+            photonView.RPC("RPC_ShowCrewPanel", RpcTarget.AllBuffered, true);
+        }
+
+        // Jika playerCrewCount lebih dari 0, cek status knock
+        if (playerCrewCount > 0)
+        {
+            // Dapatkan semua pemain dengan tag "Player"
+            GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+
+            bool allPlayersKnocked = true; // Asumsikan semua pemain knock
+
+            // Loop melalui setiap pemain dan periksa apakah status knock mereka true
+            foreach (GameObject player in players)
+            {
+                PlayerMovement playerMovement = player.GetComponent<PlayerMovement>();
+                if (playerMovement != null && !playerMovement.GetKnock())
+                {
+                    allPlayersKnocked = false; // Jika ada satu yang tidak knock, set menjadi false
+                    break; // Berhenti loop jika ditemukan satu yang tidak knock
+                }
+            }
+
+            // Setelah loop selesai, jika semua pemain knock, tampilkan panel crew
+            if (allPlayersKnocked)
+            {
+                photonView.RPC("RPC_ShowCrewPanel", RpcTarget.AllBuffered, true);
+            }
+        }
+    }
+
+    public IEnumerator WaitForPlayerCrewCountIncrease(int index)
+    {
+        // Simpan nilai sebelumnya dari playerCrewCount
+        int previousCount = playerCrewCount;
+
+        // Tambahkan ke playerCrewCount
+        SetPlayerCrew(index);
+
+        // Tunggu hingga playerCrewCount bertambah
+        while (playerCrewCount <= previousCount)
+        {
+            yield return null; // Tunggu frame berikutnya
+        }
+
+        // Lakukan logika tambahan jika diperlukan setelah playerCrewCount bertambah
+        Debug.Log("Player crew count increased to: " + playerCrewCount);
+    }
+
+    [PunRPC]
+    public void RPC_SetPlayerCrewCount(int count)
+    {
+        playerCrewCount += count; // Tambahkan count ke playerCrewCount
+        Debug.Log("Player crew count updated to: " + playerCrewCount);
+    }
+
+
+
+
+
+
+    IEnumerator WaitForAllPlayersReady()
+    {
+        while (playersIndex.Length < PhotonNetwork.CurrentRoom.PlayerCount) // Ganti dengan jumlah pemain yang diinginkan
+        {
+            // Find all GameObjects with the tag "Player"
+            playersIndex = GameObject.FindGameObjectsWithTag("Player");
+            yield return null; // Tunggu hingga ada cukup pemain
+        }
+    }
+
+    [PunRPC]
+    void RPC_GetAllPlayers()
+    {
+        StartCoroutine(WaitForAllPlayersReady());
+    }
+
     public void SetCountPlayerKnock()
     {
         // Dapatkan semua pemain dengan tag "Player"
-        players = GameObject.FindGameObjectsWithTag("Player");
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
 
         bool allPlayersKnocked = true; // Asumsikan semua pemain knock
 
@@ -54,7 +144,7 @@ public class GameManager : MonoBehaviourPun
         }
 
         // Jika semua pemain knock, kirim RPC untuk menampilkan panel impostor
-        if (allPlayersKnocked)
+        if (allPlayersKnocked && playerCrewCount == 0)
         {
             photonView.RPC("RPC_ShowImpostorPanel", RpcTarget.AllBuffered, true);
         }
@@ -65,7 +155,6 @@ public class GameManager : MonoBehaviourPun
         // Pastikan hanya instantiate player saat terhubung dengan Photon
         if (PhotonNetwork.IsConnectedAndReady)
         {
-            CountPlayerKnock = 0;
             // Pilih impostor jika masih belum dipilih
             if (PhotonNetwork.IsMasterClient && impostorIndex == -1)
             {
@@ -124,6 +213,13 @@ public class GameManager : MonoBehaviourPun
         {
             Debug.LogWarning("Tidak ada pointSpawn yang tersedia untuk player index ini.");
         }
+
+        //Setelah semua pemain di-spawn, ambil semua pemain
+        playersIndex = GameObject.FindGameObjectsWithTag("Player");
+        Debug.Log("Players found: " + playersIndex.Length);
+
+        // Panggil RPC untuk mendapatkan semua pemain
+        photonView.RPC("RPC_GetAllPlayers", RpcTarget.AllBuffered);
     }
 
     [PunRPC]
@@ -275,7 +371,23 @@ public class GameManager : MonoBehaviourPun
         // Jalankan coroutine untuk menampilkan/menyembunyikan panel dengan delay
         StartCoroutine(ShowImpostorPanelWithDelay(show));
     }
+    [PunRPC]
+    void RPC_ShowCrewPanel(bool show)
+    {
+        // Jalankan coroutine untuk menampilkan/menyembunyikan panel dengan delay
+        StartCoroutine(ShowCrewPanelWithDelay(show));
+    }
+    IEnumerator ShowCrewPanelWithDelay(bool show)
+    {
+        if (show)
+        {
+            // Berikan jeda 2 detik sebelum menampilkan panel impostor
+            yield return new WaitForSeconds(2);
+        }
 
+        // Aktifkan atau nonaktifkan panel impostor berdasarkan parameter
+        panelCrew.SetActive(show);
+    }
     IEnumerator ShowImpostorPanelWithDelay(bool show)
     {
         if (show)

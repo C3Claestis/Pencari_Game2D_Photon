@@ -33,25 +33,29 @@ public class PortalFinishPlayer : MonoBehaviourPunCallbacks
             panel_treasure.SetActive(false);
             panel_crew.SetActive(true);
 
-            // Send an RPC to hide this player across all clients
-            photonView.RPC("HidePlayer", RpcTarget.AllBuffered, PhotonNetwork.LocalPlayer.ActorNumber);
-
             // Add this player to the crew order via GameManager
             gameManager.AddPlayerToCrew(PhotonNetwork.LocalPlayer.NickName);  // Add the player's name
+
+            StartCoroutine(gameManager.WaitForPlayerCrewCountIncrease(1));
+
+            // Send an RPC to hide this player across all clients
+            photonView.RPC("HidePlayer", RpcTarget.AllBuffered, PhotonNetwork.LocalPlayer.ActorNumber);
         }
     }
-    
-    // RPC to hide the player on all clients
+
     [PunRPC]
     private void HidePlayer(int actorNumber)
     {
         foreach (PhotonView pView in FindObjectsOfType<PhotonView>())
         {
-            if (pView.Owner.ActorNumber == actorNumber)
+            Debug.Log("Checking PhotonView: " + pView.gameObject.name);
+            if (pView.Owner.ActorNumber == actorNumber && pView.gameObject.CompareTag("Player"))
             {
+                Debug.Log("Hiding Player: " + pView.gameObject.name);
                 pView.gameObject.SetActive(false);  // Hide player GameObject across all clients
                 break;
             }
         }
     }
+
 }

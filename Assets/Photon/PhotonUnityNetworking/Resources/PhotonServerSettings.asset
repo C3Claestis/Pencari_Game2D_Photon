@@ -62,6 +62,10 @@ MonoBehaviour:
   - RPC_ShowCrewPanel
   - ShowCrewPanelRPC
   - RPC_ShowCrew
+  - SetPlayerCrew
+  - RPC_GetAllPlayers
+  - RPC_SetPlayerCrew
+  - RPC_SetPlayerCrewCount
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1
