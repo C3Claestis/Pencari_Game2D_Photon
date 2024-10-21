@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using Photon.Pun;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ObjectFixed : MonoBehaviour
+public class ObjectFixed : MonoBehaviourPun
 {
     [SerializeField] GameObject bar;
     [SerializeField] Image imageBar;
@@ -71,8 +72,19 @@ public class ObjectFixed : MonoBehaviour
     {
         if (!isFixed) // Pastikan hanya dipanggil sekali
         {
-            IndexTreasure.SetIndeCount(1); // Kurangi jumlah objek dengan 1
-            isFixed = true; // Tandai objek sebagai sudah diperbaiki
+            // Panggil RPC untuk mengurangi indexCount di semua klien
+            IndexTreasure.SetIndeCount(1);
+            photonView.RPC("RPC_FixedIndex", RpcTarget.AllBuffered, true, 1);
+        }
+    }
+    [PunRPC]
+    void RPC_FixedIndex(bool fixedex, int index)
+    {
+        isFixed = fixedex; // Tandai objek sebagai sudah diperbaiki
+                           // Hanya ubah indexCount jika objek belum diperbaiki
+        if (!isFixed)
+        {
+            IndexTreasure.SetIndeCount(index); // Kurangi jumlah objek dengan 1
         }
     }
 

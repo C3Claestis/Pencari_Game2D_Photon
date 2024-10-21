@@ -11,7 +11,7 @@ public class PortalFinishPlayer : MonoBehaviourPunCallbacks
         if (photonView.IsMine)
         {
             // Menemukan panel secara manual melalui parent mereka
-            GameObject panelWinnerCrewParent = GameObject.Find("Panel-WinnerCrew");
+            GameObject panelWinnerCrewParent = GameObject.Find("Panel-Finish");
             panel_treasure = GameObject.Find("Panel-Game");
 
             // Mengambil child-nya walaupun awalnya nonaktif

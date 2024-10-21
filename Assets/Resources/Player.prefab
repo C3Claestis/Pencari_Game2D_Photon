@@ -321,7 +321,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ImageBar: {fileID: 4440649200334092676}
   parentPlayer: {fileID: 7729194030667056928}
-  spriteAnim: {fileID: 6153334268725321893}
 --- !u!114 &2830850260733142109
 MonoBehaviour:
   m_ObjectHideFlags: 0

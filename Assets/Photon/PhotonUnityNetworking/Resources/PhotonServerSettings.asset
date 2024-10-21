@@ -69,6 +69,13 @@ MonoBehaviour:
   - SyncResuAnim
   - SyncImageBar
   - SyncResuAnimPlayer
+  - SyncIndexCount
+  - SyncCurrentBar
+  - RPCDecreaseIndexCount
+  - SyncFixObject
+  - RPC_IndexCount
+  - RPC_FixedIndex
+  - RPC_SetIndexCount
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

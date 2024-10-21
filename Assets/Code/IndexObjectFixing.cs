@@ -16,11 +16,22 @@ public class IndexObjectFixing : MonoBehaviourPun
 
     public void SetIndeCount(int decrement)
     {
+        // Hanya MasterClient yang memanggil ini
+        if (PhotonNetwork.IsMasterClient)
+        {
+            // Panggil RPC untuk mengurangi indexCount di semua klien
+            photonView.RPC("RPC_SetIndexCount", RpcTarget.AllBuffered, decrement);
+        }
+    }
+
+    [PunRPC]
+    void RPC_SetIndexCount(int decrement)
+    {
         indexCount -= decrement; // Kurangi nilai indexCount
         UpdateText(); // Perbarui tampilan teks setelah dikurangi
 
         // Jika indexCount sudah 0 dan spawning belum selesai, mulai proses spawn
-        if (indexCount == 0 && !spawningCompleted && PhotonNetwork.IsMasterClient)
+        if (indexCount == 0 && !spawningCompleted)
         {
             SpawnPortal();
         }
@@ -28,7 +39,7 @@ public class IndexObjectFixing : MonoBehaviourPun
 
     void Start()
     {
-        indexCount = 1; // Set default value
+        indexCount = 10; // Set default value
         textMeshProUGUI = GetComponent<TextMeshProUGUI>();
         UpdateText(); // Menampilkan teks di awal
     }
@@ -86,7 +97,7 @@ public class IndexObjectFixing : MonoBehaviourPun
 
             // Hanya MasterClient yang instansiasi portal
             GameObject newObject = PhotonNetwork.Instantiate(portal.name, spawnPoint.position, Quaternion.identity);
-            
+
             // Set parent setelah spawn untuk memastikan portal di parent ke posPortal
             photonView.RPC("SetParentForPortal", RpcTarget.AllBuffered, newObject.GetComponent<PhotonView>().ViewID, i);
 
