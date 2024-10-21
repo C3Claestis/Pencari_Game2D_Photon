@@ -77,16 +77,6 @@ public class ObjectFixed : MonoBehaviourPun
             photonView.RPC("RPC_FixedIndex", RpcTarget.AllBuffered, true, 1);
         }
     }
-    [PunRPC]
-    void RPC_FixedIndex(bool fixedex, int index)
-    {
-        isFixed = fixedex; // Tandai objek sebagai sudah diperbaiki
-                           // Hanya ubah indexCount jika objek belum diperbaiki
-        if (!isFixed)
-        {
-            IndexTreasure.SetIndeCount(index); // Kurangi jumlah objek dengan 1
-        }
-    }
 
     void OnTriggerEnter2D(Collider2D other)
     {
@@ -126,6 +116,17 @@ public class ObjectFixed : MonoBehaviourPun
         if (other.CompareTag("AttackPointPlayer") && !isFixed)
         {
             canBerkurang = false;
+        }
+    }
+    
+    [PunRPC]
+    void RPC_FixedIndex(bool fixedex, int index)
+    {
+        isFixed = fixedex; // Tandai objek sebagai sudah diperbaiki
+                           // Hanya ubah indexCount jika objek belum diperbaiki
+        if (!isFixed)
+        {
+            IndexTreasure.SetIndeCount(index); // Kurangi jumlah objek dengan 1
         }
     }
 }

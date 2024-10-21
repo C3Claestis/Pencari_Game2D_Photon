@@ -14,29 +14,6 @@ public class IndexObjectFixing : MonoBehaviourPun
     private bool spawningCompleted = false; // Menandakan apakah spawning sudah selesai
     private List<int> selectedSpawnIndices = new List<int>(); // List of selected spawn indices
 
-    public void SetIndeCount(int decrement)
-    {
-        // Hanya MasterClient yang memanggil ini
-        if (PhotonNetwork.IsMasterClient)
-        {
-            // Panggil RPC untuk mengurangi indexCount di semua klien
-            photonView.RPC("RPC_SetIndexCount", RpcTarget.AllBuffered, decrement);
-        }
-    }
-
-    [PunRPC]
-    void RPC_SetIndexCount(int decrement)
-    {
-        indexCount -= decrement; // Kurangi nilai indexCount
-        UpdateText(); // Perbarui tampilan teks setelah dikurangi
-
-        // Jika indexCount sudah 0 dan spawning belum selesai, mulai proses spawn
-        if (indexCount == 0 && !spawningCompleted)
-        {
-            SpawnPortal();
-        }
-    }
-
     void Start()
     {
         indexCount = 10; // Set default value
@@ -47,6 +24,15 @@ public class IndexObjectFixing : MonoBehaviourPun
     void UpdateText()
     {
         textMeshProUGUI.text = indexCount.ToString(); // Update teks di UI
+    }
+    public void SetIndeCount(int decrement)
+    {
+        // Hanya MasterClient yang memanggil ini
+        if (PhotonNetwork.IsMasterClient)
+        {
+            // Panggil RPC untuk mengurangi indexCount di semua klien
+            photonView.RPC("RPC_SetIndexCount", RpcTarget.AllBuffered, decrement);
+        }
     }
 
     // Fungsi ini hanya dilakukan oleh MasterClient untuk memilih posisi spawn portal
@@ -117,5 +103,18 @@ public class IndexObjectFixing : MonoBehaviourPun
         // Cari spawn point berdasarkan indeks dan set sebagai parent
         Transform spawnPoint = posPortal[selectedSpawnIndices[spawnIndex]];
         portalObject.transform.SetParent(spawnPoint);
+    }
+
+    [PunRPC]
+    void RPC_SetIndexCount(int decrement)
+    {
+        indexCount -= decrement; // Kurangi nilai indexCount
+        UpdateText(); // Perbarui tampilan teks setelah dikurangi
+
+        // Jika indexCount sudah 0 dan spawning belum selesai, mulai proses spawn
+        if (indexCount == 0 && !spawningCompleted)
+        {
+            SpawnPortal();
+        }
     }
 }
