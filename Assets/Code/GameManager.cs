@@ -37,6 +37,34 @@ public class GameManager : MonoBehaviourPun
     private int objectsSpawned = 0; // Counter untuk objek yang telah di-spawn
     private int playerCrewCount = 0;  // Counter untuk crew yang telah ditambahkan
 
+    void Start()
+    {
+        // Pastikan hanya instantiate player saat terhubung dengan Photon
+        if (PhotonNetwork.IsConnectedAndReady)
+        {
+            // Pilih impostor jika masih belum dipilih
+            if (PhotonNetwork.IsMasterClient && impostorIndex == -1)
+            {
+                impostorIndex = Random.Range(0, PhotonNetwork.CurrentRoom.PlayerCount); // Pilih pemain acak
+                photonView.RPC("SetImpostorIndex", RpcTarget.AllBuffered, impostorIndex); // Broadcast impostor index
+            }
+
+            // Mulai Coroutine untuk menunggu sampai semua pemain mendapatkan impostorIndex
+            StartCoroutine(WaitForAllPlayersToReceiveImpostorIndex());
+        }
+
+        // Hanya master client yang memilih dan men-spawn objek
+        if (PhotonNetwork.IsMasterClient)
+        {
+            // Pilih 10 titik spawn secara acak dari array spawnObjek
+            SelectRandomSpawnPoints();
+
+            // Mulai proses spawn objek secara acak
+            StartCoroutine(RandomSpawn());
+        }
+    }
+
+    //SETPLAYER UI PANEL CREWMET MANAGER
     public void SetPlayerCrew(int index)
     {
         playerCrewCount += index;  // Tambahkan nilai index ke counter
@@ -77,52 +105,7 @@ public class GameManager : MonoBehaviourPun
         }
     }
 
-    public IEnumerator WaitForPlayerCrewCountIncrease(int index)
-    {
-        // Simpan nilai sebelumnya dari playerCrewCount
-        int previousCount = playerCrewCount;
-
-        // Tambahkan ke playerCrewCount
-        SetPlayerCrew(index);
-
-        // Tunggu hingga playerCrewCount bertambah
-        while (playerCrewCount <= previousCount)
-        {
-            yield return null; // Tunggu frame berikutnya
-        }
-
-        // Lakukan logika tambahan jika diperlukan setelah playerCrewCount bertambah
-        Debug.Log("Player crew count increased to: " + playerCrewCount);
-    }
-
-    [PunRPC]
-    public void RPC_SetPlayerCrewCount(int count)
-    {
-        playerCrewCount += count; // Tambahkan count ke playerCrewCount
-        Debug.Log("Player crew count updated to: " + playerCrewCount);
-    }
-
-
-
-
-
-
-    IEnumerator WaitForAllPlayersReady()
-    {
-        while (playersIndex.Length < PhotonNetwork.CurrentRoom.PlayerCount) // Ganti dengan jumlah pemain yang diinginkan
-        {
-            // Find all GameObjects with the tag "Player"
-            playersIndex = GameObject.FindGameObjectsWithTag("Player");
-            yield return null; // Tunggu hingga ada cukup pemain
-        }
-    }
-
-    [PunRPC]
-    void RPC_GetAllPlayers()
-    {
-        StartCoroutine(WaitForAllPlayersReady());
-    }
-
+    //SET PLAYER IMPOSTOR PANEL MANAGER
     public void SetCountPlayerKnock()
     {
         // Dapatkan semua pemain dengan tag "Player"
@@ -150,33 +133,98 @@ public class GameManager : MonoBehaviourPun
         }
     }
 
-    void Start()
+    public void LeaveRoom()
     {
-        // Pastikan hanya instantiate player saat terhubung dengan Photon
-        if (PhotonNetwork.IsConnectedAndReady)
+        StartCoroutine(LeaveRoomAndReturnToMainMenu());
+    }
+
+    // Pilih 10 spawn point secara acak dari array spawnObjek
+    void SelectRandomSpawnPoints()
+    {
+        List<Transform> availablePoints = new List<Transform>(spawnObjek); // Salin array spawnObjek ke list
+
+        // Shuffle spawnObjek dan pilih 10 pertama
+        for (int i = 0; i < maxObjectsToSpawn; i++)
         {
-            // Pilih impostor jika masih belum dipilih
-            if (PhotonNetwork.IsMasterClient && impostorIndex == -1)
-            {
-                impostorIndex = Random.Range(0, PhotonNetwork.CurrentRoom.PlayerCount); // Pilih pemain acak
-                photonView.RPC("SetImpostorIndex", RpcTarget.AllBuffered, impostorIndex); // Broadcast impostor index
-            }
+            if (availablePoints.Count == 0) break;
 
-            // Mulai Coroutine untuk menunggu sampai semua pemain mendapatkan impostorIndex
-            StartCoroutine(WaitForAllPlayersToReceiveImpostorIndex());
-        }
-
-        // Hanya master client yang memilih dan men-spawn objek
-        if (PhotonNetwork.IsMasterClient)
-        {
-            // Pilih 10 titik spawn secara acak dari array spawnObjek
-            SelectRandomSpawnPoints();
-
-            // Mulai proses spawn objek secara acak
-            StartCoroutine(RandomSpawn());
+            int randomIndex = Random.Range(0, availablePoints.Count);
+            selectedSpawnPoints.Add(availablePoints[randomIndex]);
+            availablePoints.RemoveAt(randomIndex); // Hapus dari list setelah dipilih
         }
     }
 
+    // Mendapatkan spawn point yang tersedia dari selectedSpawnPoints
+    Transform GetRandomAvailableSpawnPoint()
+    {
+        List<Transform> availableSpawnPoints = new List<Transform>();
+
+        foreach (Transform point in selectedSpawnPoints)
+        {
+            if (point.childCount == 0)
+            {
+                availableSpawnPoints.Add(point);
+            }
+        }
+
+        if (availableSpawnPoints.Count > 0)
+        {
+            return availableSpawnPoints[Random.Range(0, availableSpawnPoints.Count)];
+        }
+
+        return null;
+    }
+
+    public void AddPlayerToCrew(string playerName)
+    {
+        // Cek apakah nama pemain sudah ada dan batas maksimum
+        if (!crewNames.Contains(playerName) && crewNames.Count < 4)
+        {
+            crewNames.Add(playerName);
+
+            // Kirim RPC untuk menambahkan satu nama ke semua klien
+            photonView.RPC("AddCrewNameRPC", RpcTarget.AllBuffered, playerName);
+        }
+    }
+
+    // Fungsi untuk memperbarui UI berdasarkan daftar crewNames
+    private void UpdateCrewUI()
+    {
+        // Pastikan UI diisi sesuai urutan crewNames
+        if (crewNames.Count > 0) crew1.text = crewNames[0];
+        if (crewNames.Count > 1) crew2.text = crewNames[1];
+        if (crewNames.Count > 2) crew3.text = crewNames[2];
+        if (crewNames.Count > 3) crew4.text = crewNames[3];
+
+        // Jika kurang dari 4 crew, sisanya kosong
+        if (crewNames.Count < 4) crew4.text = "-";
+        if (crewNames.Count < 3) crew3.text = "-";
+        if (crewNames.Count < 2) crew2.text = "-";
+        if (crewNames.Count < 1) crew1.text = "-";
+
+        Debug.Log("Crew UI Updated: " + string.Join(", ", crewNames));
+    }
+
+    #region COROUTINE FUNCTION
+    IEnumerator RandomSpawn()
+    {
+        while (objectsSpawned < maxObjectsToSpawn)
+        {
+            // Pilih spawn point yang tersedia
+            Transform spawnPoint = GetRandomAvailableSpawnPoint();
+
+            if (spawnPoint != null)
+            {
+                int spawnIndex = selectedSpawnPoints.IndexOf(spawnPoint); // Dapatkan index dari selectedSpawnPoints
+
+                photonView.RPC("SpawnObjectWithValue", RpcTarget.AllBuffered, spawnIndex);
+                objectsSpawned++;
+            }
+            yield return new WaitForSeconds(1); // Tunggu 1 detik sebelum spawn berikutnya
+        }
+
+        Debug.Log("Sudah spawn 10 objek. Berhenti spawn.");
+    }
     IEnumerator WaitForAllPlayersToReceiveImpostorIndex()
     {
         // Tunggu sampai semua pemain mendapatkan impostorIndex
@@ -221,161 +269,31 @@ public class GameManager : MonoBehaviourPun
         // Panggil RPC untuk mendapatkan semua pemain
         photonView.RPC("RPC_GetAllPlayers", RpcTarget.AllBuffered);
     }
-
-    [PunRPC]
-    void SetImpostorIndex(int index)
+    IEnumerator WaitForAllPlayersReady()
     {
-        impostorIndex = index; // Set impostor index
-        Debug.Log("Impostor index set to: " + index);
-    }
-
-    public void LeaveRoom()
-    {
-        StartCoroutine(LeaveRoomAndReturnToMainMenu());
-    }
-
-    IEnumerator LeaveRoomAndReturnToMainMenu()
-    {
-        PhotonNetwork.LeaveRoom();
-
-        while (PhotonNetwork.InRoom)
+        while (playersIndex.Length < PhotonNetwork.CurrentRoom.PlayerCount) // Ganti dengan jumlah pemain yang diinginkan
         {
-            yield return null;
-        }
-
-        SceneManager.LoadScene(0);
-    }
-
-    // Pilih 10 spawn point secara acak dari array spawnObjek
-    void SelectRandomSpawnPoints()
-    {
-        List<Transform> availablePoints = new List<Transform>(spawnObjek); // Salin array spawnObjek ke list
-
-        // Shuffle spawnObjek dan pilih 10 pertama
-        for (int i = 0; i < maxObjectsToSpawn; i++)
-        {
-            if (availablePoints.Count == 0) break;
-
-            int randomIndex = Random.Range(0, availablePoints.Count);
-            selectedSpawnPoints.Add(availablePoints[randomIndex]);
-            availablePoints.RemoveAt(randomIndex); // Hapus dari list setelah dipilih
+            // Find all GameObjects with the tag "Player"
+            playersIndex = GameObject.FindGameObjectsWithTag("Player");
+            yield return null; // Tunggu hingga ada cukup pemain
         }
     }
-
-    IEnumerator RandomSpawn()
+    public IEnumerator WaitForPlayerCrewCountIncrease(int index)
     {
-        while (objectsSpawned < maxObjectsToSpawn)
+        // Simpan nilai sebelumnya dari playerCrewCount
+        int previousCount = playerCrewCount;
+
+        // Tambahkan ke playerCrewCount
+        SetPlayerCrew(index);
+
+        // Tunggu hingga playerCrewCount bertambah
+        while (playerCrewCount <= previousCount)
         {
-            // Pilih spawn point yang tersedia
-            Transform spawnPoint = GetRandomAvailableSpawnPoint();
-
-            if (spawnPoint != null)
-            {
-                int spawnIndex = selectedSpawnPoints.IndexOf(spawnPoint); // Dapatkan index dari selectedSpawnPoints
-
-                photonView.RPC("SpawnObjectWithValue", RpcTarget.AllBuffered, spawnIndex);
-                objectsSpawned++;
-            }
-            yield return new WaitForSeconds(1); // Tunggu 1 detik sebelum spawn berikutnya
+            yield return null; // Tunggu frame berikutnya
         }
 
-        Debug.Log("Sudah spawn 10 objek. Berhenti spawn.");
-    }
-
-    [PunRPC]
-    void SpawnObjectWithValue(int spawnIndex)
-    {
-        Transform parentSpawnPoint = selectedSpawnPoints[spawnIndex]; // Gunakan selectedSpawnPoints
-
-        // Cek jika spawn point sudah ada child, hapus child sebelumnya
-        if (parentSpawnPoint.childCount > 0)
-        {
-            Destroy(parentSpawnPoint.GetChild(0).gameObject);
-        }
-
-        // Instantiate object di posisi spawnObjek yang dipilih
-        GameObject newObject = PhotonNetwork.Instantiate(objectPrefab.name, parentSpawnPoint.position, Quaternion.identity);
-
-        // Jadikan object sebagai child dari spawnPoint yang dipilih
-        newObject.transform.SetParent(parentSpawnPoint);
-    }
-
-    // Mendapatkan spawn point yang tersedia dari selectedSpawnPoints
-    Transform GetRandomAvailableSpawnPoint()
-    {
-        List<Transform> availableSpawnPoints = new List<Transform>();
-
-        foreach (Transform point in selectedSpawnPoints)
-        {
-            if (point.childCount == 0)
-            {
-                availableSpawnPoints.Add(point);
-            }
-        }
-
-        if (availableSpawnPoints.Count > 0)
-        {
-            return availableSpawnPoints[Random.Range(0, availableSpawnPoints.Count)];
-        }
-
-        return null;
-    }
-
-    public void AddPlayerToCrew(string playerName)
-    {
-        // Cek apakah nama pemain sudah ada dan batas maksimum
-        if (!crewNames.Contains(playerName) && crewNames.Count < 4)
-        {
-            crewNames.Add(playerName);
-
-            // Kirim RPC untuk menambahkan satu nama ke semua klien
-            photonView.RPC("AddCrewNameRPC", RpcTarget.AllBuffered, playerName);
-        }
-    }
-
-    // RPC untuk menambahkan satu nama ke semua klien dan update UI
-    [PunRPC]
-    private void AddCrewNameRPC(string newCrewName)
-    {
-        // Tambahkan nama baru ke list jika belum ada
-        if (!crewNames.Contains(newCrewName))
-        {
-            crewNames.Add(newCrewName);
-        }
-
-        // Update UI text sesuai dengan jumlah crewNames
-        UpdateCrewUI();
-    }
-
-    // Fungsi untuk memperbarui UI berdasarkan daftar crewNames
-    private void UpdateCrewUI()
-    {
-        // Pastikan UI diisi sesuai urutan crewNames
-        if (crewNames.Count > 0) crew1.text = crewNames[0];
-        if (crewNames.Count > 1) crew2.text = crewNames[1];
-        if (crewNames.Count > 2) crew3.text = crewNames[2];
-        if (crewNames.Count > 3) crew4.text = crewNames[3];
-
-        // Jika kurang dari 4 crew, sisanya kosong
-        if (crewNames.Count < 4) crew4.text = "-";
-        if (crewNames.Count < 3) crew3.text = "-";
-        if (crewNames.Count < 2) crew2.text = "-";
-        if (crewNames.Count < 1) crew1.text = "-";
-
-        Debug.Log("Crew UI Updated: " + string.Join(", ", crewNames));
-    }
-
-    [PunRPC]
-    void RPC_ShowImpostorPanel(bool show)
-    {
-        // Jalankan coroutine untuk menampilkan/menyembunyikan panel dengan delay
-        StartCoroutine(ShowImpostorPanelWithDelay(show));
-    }
-    [PunRPC]
-    void RPC_ShowCrewPanel(bool show)
-    {
-        // Jalankan coroutine untuk menampilkan/menyembunyikan panel dengan delay
-        StartCoroutine(ShowCrewPanelWithDelay(show));
+        // Lakukan logika tambahan jika diperlukan setelah playerCrewCount bertambah
+        Debug.Log("Player crew count increased to: " + playerCrewCount);
     }
     IEnumerator ShowCrewPanelWithDelay(bool show)
     {
@@ -399,4 +317,90 @@ public class GameManager : MonoBehaviourPun
         // Aktifkan atau nonaktifkan panel impostor berdasarkan parameter
         panelImpostor.SetActive(show);
     }
+    IEnumerator LeaveRoomAndReturnToMainMenu()
+    {
+        PhotonNetwork.LeaveRoom();
+
+        while (PhotonNetwork.InRoom)
+        {
+            yield return null;
+        }
+
+        SceneManager.LoadScene(0);
+    }
+    #endregion
+
+    #region RPC AREA
+    // RPC untuk spawn treasure pertama kali ke semua player
+    [PunRPC]
+    void SpawnObjectWithValue(int spawnIndex)
+    {
+        Transform parentSpawnPoint = selectedSpawnPoints[spawnIndex]; // Gunakan selectedSpawnPoints
+
+        // Cek jika spawn point sudah ada child, hapus child sebelumnya
+        if (parentSpawnPoint.childCount > 0)
+        {
+            Destroy(parentSpawnPoint.GetChild(0).gameObject);
+        }
+
+        // Instantiate object di posisi spawnObjek yang dipilih
+        GameObject newObject = PhotonNetwork.Instantiate(objectPrefab.name, parentSpawnPoint.position, Quaternion.identity);
+
+        // Jadikan object sebagai child dari spawnPoint yang dipilih
+        newObject.transform.SetParent(parentSpawnPoint);
+    }
+
+    //RPC untuk menambahkan playerCrewCount ke semua player, untuk pengecekan panel crew
+    [PunRPC]
+    public void RPC_SetPlayerCrewCount(int count)
+    {
+        playerCrewCount += count; // Tambahkan count ke playerCrewCount
+        Debug.Log("Player crew count updated to: " + playerCrewCount);
+    }
+
+    // RPC untuk menampilkan panel impostor keseluruh player
+    [PunRPC]
+    void RPC_ShowImpostorPanel(bool show)
+    {
+        // Jalankan coroutine untuk menampilkan/menyembunyikan panel dengan delay
+        StartCoroutine(ShowImpostorPanelWithDelay(show));
+    }
+
+    // RPC untuk menampilkan panel crewmet keseluruh player
+    [PunRPC]
+    void RPC_ShowCrewPanel(bool show)
+    {
+        // Jalankan coroutine untuk menampilkan/menyembunyikan panel dengan delay
+        StartCoroutine(ShowCrewPanelWithDelay(show));
+    }
+
+    // RPC untuk mengambil coroutine tunggu sampai seluruh player ready
+    [PunRPC]
+    void RPC_GetAllPlayers()
+    {
+        StartCoroutine(WaitForAllPlayersReady());
+    }
+
+    // RPC untuk menambahkan index impostor ketika start
+    [PunRPC]
+    void SetImpostorIndex(int index)
+    {
+        impostorIndex = index; // Set impostor index
+        Debug.Log("Impostor index set to: " + index);
+    }
+
+    // RPC untuk menambahkan satu nama ke semua klien dan update UI
+    [PunRPC]
+    private void AddCrewNameRPC(string newCrewName)
+    {
+        // Tambahkan nama baru ke list jika belum ada
+        if (!crewNames.Contains(newCrewName))
+        {
+            crewNames.Add(newCrewName);
+        }
+
+        // Update UI text sesuai dengan jumlah crewNames
+        UpdateCrewUI();
+    }
+    #endregion
 }

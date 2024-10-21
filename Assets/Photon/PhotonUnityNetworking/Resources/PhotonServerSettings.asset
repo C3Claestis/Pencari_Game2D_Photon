@@ -66,6 +66,9 @@ MonoBehaviour:
   - RPC_GetAllPlayers
   - RPC_SetPlayerCrew
   - RPC_SetPlayerCrewCount
+  - SyncResuAnim
+  - SyncImageBar
+  - SyncResuAnimPlayer
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

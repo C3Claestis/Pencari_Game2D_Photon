@@ -20,6 +20,7 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
     [Header("=========== ATRIBUT ICON AND TRIGGER ===========")]
     [SerializeField] GameObject teleIcon;
     [SerializeField] GameObject pointAttack;
+    [SerializeField] Resurection resurection;
     private GameObject minimapItem;
     private Rigidbody2D rb;
     private GameObject cameraFollow;
@@ -29,15 +30,9 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
     private bool isCanFixing;
     private bool Fixing;
     private bool isKnock;
-
+    private bool isResu;
     public bool GetKnock() => isKnock;
-    public void SetKnock(bool knock) => this.isKnock = knock;
     public void SetCanFixing(bool canfix) => this.isCanFixing = canfix;
-    public bool SetTeleActive(bool teleIcons)
-    {
-        teleIcon.SetActive(teleIcons);
-        return teleIcon;
-    }
 
     void Start()
     {
@@ -68,10 +63,29 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
             transform.position = Vector3.Lerp(transform.position, networkPosition, Time.deltaTime * 10);
         }
     }
+    public void SetResu(bool resu)
+    {
+        this.isResu = resu;
 
+        // Panggil RPC untuk mengubah animasi di semua klien
+        photonView.RPC("SyncResuAnimPlayer", RpcTarget.All, resu);
+    }
+
+    public bool SetTeleActive(bool teleIcons)
+    {
+        teleIcon.SetActive(teleIcons);
+        return teleIcon;
+    }
+    public void SetKnock(bool knock)
+    {
+        this.isKnock = knock;
+
+        // Sinkronisasi perubahan status knock dengan semua klien
+        photonView.RPC("ApplyKnock", RpcTarget.All, knock);
+    }
     void HandleMovement()
     {
-        if (isAttacking || Fixing || isKnock)
+        if (isAttacking || Fixing || isKnock || isResu)
         {
             rb.velocity = Vector2.zero;
             return;
@@ -158,14 +172,8 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
                     PlayerAttack(false);
                 }
             }
-        }
-        if (isKnock)
-        {
-            animator_karakter.SetBool("Knock", true);
-        }
-        else
-        {
-            animator_karakter.SetBool("Knock", false);
+            
+            animator_karakter.SetBool("Knock", isKnock);
         }
     }
 
@@ -215,17 +223,24 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
         pointAttack.SetActive(isAttacking);
         animator_karakter.SetBool("Attack", isAttacking);
     }
+    [PunRPC]
+    void SyncResuAnimPlayer(bool isResu)
+    {
+        // Atur animasi attack berdasarkan isResu
+        animator_karakter.SetBool("Attack", isResu);
+    }
 
     // RPC untuk mengaktifkan knock pada player
     [PunRPC]
     void ApplyKnock(bool knock)
     {
         isKnock = knock;
+        animator_karakter.SetBool("Knock", isKnock);
         if (isKnock)
         {
             // Logika ketika terkena knock
             rb.velocity = Vector2.zero;
-            animator_karakter.SetBool("Knock", true);
+            resurection.SetValue(0);
             // Tambahkan ke CountPlayerKnock jika player knock
             GameManager gameManager = FindObjectOfType<GameManager>();
             if (gameManager != null)
@@ -233,10 +248,6 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
                 gameManager.SetCountPlayerKnock();
                 StartCoroutine(gameManager.WaitForPlayerCrewCountIncrease(0));
             }
-        }
-        else
-        {
-            animator_karakter.SetBool("Knock", false);
         }
     }
 
