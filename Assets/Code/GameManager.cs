@@ -28,6 +28,7 @@ public class GameManager : MonoBehaviourPun
     [Header("=========== PANEL IMPOSTOR/CREW ============")]
     [SerializeField] GameObject panelCrew;
     [SerializeField] GameObject panelImpostor;
+    [SerializeField] Text nameImpostor;
     #endregion
     private GameObject[] playersIndex;
     private List<string> crewNames = new List<string>();  // List to hold crew names
@@ -316,6 +317,19 @@ public class GameManager : MonoBehaviourPun
 
         // Aktifkan atau nonaktifkan panel impostor berdasarkan parameter
         panelImpostor.SetActive(show);
+        
+        // Add nameimpostor UI
+        GameObject playerIndex = GameObject.FindGameObjectWithTag("Impostor");
+        if (playerIndex != null)
+        {
+            PhotonView photonView = playerIndex.GetComponent<PhotonView>();
+
+            if (photonView != null)
+            {
+                string NickName = photonView.Owner.NickName;
+                nameImpostor.text = NickName;
+            }
+        }
     }
     IEnumerator LeaveRoomAndReturnToMainMenu()
     {
