@@ -20,7 +20,12 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     [Header("Membuat Room Panel")]
     public GameObject BuatRoomPanel;
     public InputField NamaRoomInputField;
-    public InputField maxPlayerInputField;
+    public Slider maxPlayerSlider;
+    public Text maxPlayerSliderValueText;
+
+    [Header("Join Room")]
+    public GameObject JoinRoomPanel;
+    public InputField JoinRoomName;
 
     [Header("Game Panel")]
     public GameObject GamePanel;
@@ -42,7 +47,6 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     private Dictionary<string, GameObject> daftarRoomGameObjects;
     private Dictionary<int, GameObject> daftarPlayerGameobjects;
 
-
     // Start is called before the first frame update
     private void Start()
     {
@@ -50,6 +54,15 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         cachedDaftarRoom = new Dictionary<string, RoomInfo>();
         daftarRoomGameObjects = new Dictionary<string, GameObject>();
         PhotonNetwork.AutomaticallySyncScene = true;
+
+        // Menampilkan nilai slider saat slider diubah
+        maxPlayerSlider.onValueChanged.AddListener(delegate { UpdateMaxPlayerSliderValue(); });
+
+        // Setting awal slider
+        maxPlayerSlider.minValue = 1f;
+        maxPlayerSlider.maxValue = 5f; // Slider akan memiliki range 0-100, dan kita akan memetakannya ke max 5 player
+        maxPlayerSlider.wholeNumbers = false;
+        UpdateMaxPlayerSliderValue();
     }
 
     // Update is called once per frame
@@ -57,11 +70,17 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     {
         //Mengecek Status Koneksi
         statusKoneksi.text = "Status Koneksi: " + PhotonNetwork.NetworkClientState;
+
+        // Cek apakah slider berada di float, jika ya, bulatkan ke int terdekat
+        if (maxPlayerSlider.value != Mathf.Round(maxPlayerSlider.value))
+        {
+            maxPlayerSlider.value = Mathf.Round(maxPlayerSlider.value); // Paksa slider ke nilai integer
+        }
     }
+
     //Tombol Login
     public void OnLoginButtonClicked()
     {
-
         string playerName = NamaPlayer.text;
         if (!string.IsNullOrEmpty(playerName))
         {
@@ -74,6 +93,14 @@ public class LobbyManager : MonoBehaviourPunCallbacks
             Debug.Log("Nama Player Tidak Valid!");
         }
     }
+
+    //Tombol Kembali
+    public void OnCancelButtonClicked()
+    {
+        ActivatePanel(RoomPanel.name);
+    }
+
+    #region BUAT ROOM DAN JOIN ROOM
     //Tombol buat room
     public void OnRoomCreateButtonClicked()
     {
@@ -82,35 +109,30 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         if (string.IsNullOrEmpty(NamaRoom))
         {
             NamaRoom = "Room " + Random.Range(1000, 10000);
-
         }
 
         RoomOptions roomOptions = new RoomOptions();
-        roomOptions.MaxPlayers = (byte)int.Parse(maxPlayerInputField.text);
+        roomOptions.MaxPlayers = (byte)maxPlayerSlider.value;
+
+        // Gunakan hasil slider sebagai jumlah maksimal pemain
+        int maxPlayers = (int)maxPlayerSlider.value; // Gunakan integer dari slider
+        roomOptions.MaxPlayers = (byte)maxPlayers;
 
         PhotonNetwork.CreateRoom(NamaRoom, roomOptions);
     }
-    public void OnCancelButtonClicked()
+
+    // Update nilai slider pada UI ketika slider diubah
+    private void UpdateMaxPlayerSliderValue()
     {
-        ActivatePanel(RoomPanel.name);
+        // Gunakan nilai integer dari slider (langsung ke int)
+        int maxPlayers = (int)maxPlayerSlider.value; // Pastikan langsung menggunakan integer
+        if (maxPlayers == 0) maxPlayers = 1; // Minimal 1 pemain
+
+        // Update UI text
+        maxPlayerSliderValueText.text = maxPlayers.ToString();
     }
 
-    public override void OnConnected()
-    {
-        Debug.Log("Terhubung ke Internet");
-    }
-
-    public override void OnConnectedToMaster()
-    {
-        Debug.Log(PhotonNetwork.LocalPlayer.NickName + " Terhubung ke Photon");
-        ActivatePanel(RoomPanel.name);
-    }
-
-    public override void OnCreatedRoom()
-    {
-        Debug.Log(PhotonNetwork.CurrentRoom.Name + " Berhasil Membuat Room.");
-    }
-
+    //Ketika Player Masuk Room
     public override void OnJoinedRoom()
     {
         Debug.Log(PhotonNetwork.LocalPlayer.NickName + " Bergabung dengan " + PhotonNetwork.CurrentRoom.Name);
@@ -156,13 +178,9 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         }
     }
 
+    //Update Ketika Player Enter Ke Room
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        roomInfoText.text = "Nama Room: " + PhotonNetwork.CurrentRoom.Name + " " +
-                           "Maks.players: " +
-                           PhotonNetwork.CurrentRoom.PlayerCount + "/" +
-                           PhotonNetwork.CurrentRoom.MaxPlayers;
-
         GameObject daftarPlayerGameobject = Instantiate(daftarplayerPrefab);
         daftarPlayerGameobject.transform.SetParent(daftarplayerContent.transform);
         daftarPlayerGameobject.transform.localScale = Vector3.one;
@@ -185,6 +203,8 @@ public class LobbyManager : MonoBehaviourPunCallbacks
             TombolMulaiGame.SetActive(true);
         }
     }
+
+    //Update Ketika Player Keluar Dari Room
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
         roomInfoText.text = "Nama Room: " + PhotonNetwork.CurrentRoom.Name + " " +
@@ -200,6 +220,8 @@ public class LobbyManager : MonoBehaviourPunCallbacks
             TombolMulaiGame.SetActive(true);
         }
     }
+
+    //Ketika Button Keluar Room Di Tekan
     public override void OnLeftRoom()
     {
         ActivatePanel(PanelLogin.name);
@@ -214,6 +236,55 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         daftarPlayerGameobjects = null;
 
     }
+
+    //Button Ke Panel Join Random
+    public void OnJoinRoomButton()
+    {
+        ActivatePanel(JoinRoomPanel.name);
+    }
+
+    //Button Untuk Join Room Setelah Input Nama Room
+    public void JoinRoom()
+    {
+        string roomName = JoinRoomName.text;
+
+        if (!string.IsNullOrEmpty(roomName))
+        {
+            // Cek apakah player sudah berada di lobby, jika iya maka langsung join
+            if (PhotonNetwork.InLobby)
+            {
+                PhotonNetwork.LeaveLobby();
+            }
+
+            // Gabung ke room berdasarkan nama room yang dimasukkan
+            PhotonNetwork.JoinRoom(roomName);
+        }
+        else
+        {
+            Debug.Log("Nama room tidak valid! Harap masukkan nama room yang benar.");
+        }
+    }
+    
+    //Button Join Random
+    public void OnJoinRandomRoomButtonClicked()
+    {
+        ActivatePanel(RoomAcakPanel.name);
+        PhotonNetwork.JoinRandomRoom();
+    }
+
+    //Ketika Gagal Join, buat room baru dengan ketentuan didalamnya
+    public override void OnJoinRandomFailed(short returnCode, string message)
+    {
+        Debug.Log(message);
+
+        string roomName = "Room " + Random.Range(1000, 10000);
+
+        RoomOptions roomOptions = new RoomOptions();
+        roomOptions.MaxPlayers = 5;
+
+        PhotonNetwork.CreateRoom(roomName, roomOptions);
+    }
+    #endregion
 
     public override void OnRoomListUpdate(List<RoomInfo> daftarRoom)
     {
@@ -259,15 +330,19 @@ public class LobbyManager : MonoBehaviourPunCallbacks
 
         }
     }
+
+    void OnJoinRoomButtonClicked(string _namaRoom)
+    {
+        if (PhotonNetwork.InLobby)
+        {
+            PhotonNetwork.LeaveLobby();
+        }
+
+        PhotonNetwork.JoinRoom(_namaRoom);
+    }
     public void OnLeaveGameButtonClicked()
     {
         PhotonNetwork.LeaveRoom();
-    }
-
-    public void OnJoinRandomRoomButtonClicked()
-    {
-        ActivatePanel(RoomAcakPanel.name);
-        PhotonNetwork.JoinRandomRoom();
     }
 
     public void OnStartGameButtonClicked()
@@ -295,27 +370,6 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     }
 
 
-    void OnJoinRoomButtonClicked(string _namaRoom)
-    {
-        if (PhotonNetwork.InLobby)
-        {
-            PhotonNetwork.LeaveLobby();
-        }
-
-        PhotonNetwork.JoinRoom(_namaRoom);
-    }
-
-    public override void OnJoinRandomFailed(short returnCode, string message)
-    {
-        Debug.Log(message);
-
-        string roomName = "Room " + Random.Range(1000, 10000);
-
-        RoomOptions roomOptions = new RoomOptions();
-        roomOptions.MaxPlayers = 5;
-
-        PhotonNetwork.CreateRoom(roomName, roomOptions);
-    }
 
     void ClearRoomListView()
     {
@@ -327,6 +381,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         daftarRoomGameObjects.Clear();
     }
 
+    //Manager Active Panel
     public void ActivatePanel(string panelToBeActivated)
     {
         PanelLogin.SetActive(panelToBeActivated.Equals(PanelLogin.name));
@@ -335,5 +390,24 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         GamePanel.SetActive(panelToBeActivated.Equals(GamePanel.name));
         DaftarRoomPanel.SetActive(panelToBeActivated.Equals(DaftarRoomPanel.name));
         RoomAcakPanel.SetActive(panelToBeActivated.Equals(RoomAcakPanel.name));
+        JoinRoomPanel.SetActive(panelToBeActivated.Equals(JoinRoomPanel.name));
     }
+
+    #region STATUS PLAYER
+    public override void OnConnected()
+    {
+        Debug.Log("Terhubung ke Internet");
+    }
+
+    public override void OnConnectedToMaster()
+    {
+        Debug.Log(PhotonNetwork.LocalPlayer.NickName + " Terhubung ke Photon");
+        ActivatePanel(RoomPanel.name);
+    }
+
+    public override void OnCreatedRoom()
+    {
+        Debug.Log(PhotonNetwork.CurrentRoom.Name + " Berhasil Membuat Room.");
+    }
+    #endregion
 }
