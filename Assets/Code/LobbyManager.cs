@@ -138,6 +138,10 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         Debug.Log(PhotonNetwork.LocalPlayer.NickName + " Bergabung dengan " + PhotonNetwork.CurrentRoom.Name);
         ActivatePanel(GamePanel.name);
 
+        roomInfoText.text = "Nama Room: " + PhotonNetwork.CurrentRoom.Name + "\n" +
+                            "Players: " + PhotonNetwork.CurrentRoom.PlayerCount + "/" +
+                            PhotonNetwork.CurrentRoom.MaxPlayers;
+
         if (PhotonNetwork.LocalPlayer.IsMasterClient && PhotonNetwork.CurrentRoom.MaxPlayers == PhotonNetwork.CurrentRoom.PlayerCount)
         {
             TombolMulaiGame.SetActive(true);
@@ -147,15 +151,9 @@ public class LobbyManager : MonoBehaviourPunCallbacks
             TombolMulaiGame.SetActive(false);
         }
 
-        roomInfoText.text = "Nama Room : " + PhotonNetwork.CurrentRoom.Name + "\n" +
-                            "Players : " +
-                            PhotonNetwork.CurrentRoom.PlayerCount + "/" +
-                            PhotonNetwork.CurrentRoom.MaxPlayers;
-
         if (daftarPlayerGameobjects == null)
         {
             daftarPlayerGameobjects = new Dictionary<int, GameObject>();
-
         }
 
         foreach (Player player in PhotonNetwork.PlayerList)
@@ -165,14 +163,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
             daftarPlayerGameobject.transform.localScale = Vector3.one;
 
             daftarPlayerGameobject.transform.Find("namaPlayerText").GetComponent<Text>().text = player.NickName;
-            if (player.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
-            {
-                daftarPlayerGameobject.transform.Find("IndikatorPlayer").gameObject.SetActive(true);
-            }
-            else
-            {
-                daftarPlayerGameobject.transform.Find("IndikatorPlayer").gameObject.SetActive(false);
-            }
+            daftarPlayerGameobject.transform.Find("IndikatorPlayer").gameObject.SetActive(player.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber);
 
             daftarPlayerGameobjects.Add(player.ActorNumber, daftarPlayerGameobject);
         }
@@ -186,38 +177,38 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         daftarPlayerGameobject.transform.localScale = Vector3.one;
 
         daftarPlayerGameobject.transform.Find("namaPlayerText").GetComponent<Text>().text = newPlayer.NickName;
-        if (newPlayer.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
-        {
-            daftarPlayerGameobject.transform.Find("IndikatorPlyer").gameObject.SetActive(true);
-        }
-        else
-        {
-            daftarPlayerGameobject.transform.Find("IndikatorPlayer").gameObject.SetActive(false);
-        }
+        daftarPlayerGameobject.transform.Find("IndikatorPlayer").gameObject.SetActive(newPlayer.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber);
 
         daftarPlayerGameobjects.Add(newPlayer.ActorNumber, daftarPlayerGameobject);
 
-        // Periksa ulang apakah pemain MasterClient dan apakah jumlah pemain sudah penuh
+        // Update jumlah player di roomInfoText
+        roomInfoText.text = "Nama Room: " + PhotonNetwork.CurrentRoom.Name + "\n" +
+                            "Players: " + PhotonNetwork.CurrentRoom.PlayerCount + "/" +
+                            PhotonNetwork.CurrentRoom.MaxPlayers;
+
+        // Periksa ulang apakah master client dan jumlah pemain penuh
         if (PhotonNetwork.LocalPlayer.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.CurrentRoom.MaxPlayers)
         {
             TombolMulaiGame.SetActive(true);
         }
     }
 
+
     //Update Ketika Player Keluar Dari Room
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
-        roomInfoText.text = "Nama Room: " + PhotonNetwork.CurrentRoom.Name + " " +
-                            "Maks.players: " +
-                           PhotonNetwork.CurrentRoom.PlayerCount + "/" +
-                           PhotonNetwork.CurrentRoom.MaxPlayers;
+        // Update jumlah player di roomInfoText
+        roomInfoText.text = "Nama Room: " + PhotonNetwork.CurrentRoom.Name + "\n" +
+                            "Players: " + PhotonNetwork.CurrentRoom.PlayerCount + "/" +
+                            PhotonNetwork.CurrentRoom.MaxPlayers;
 
         Destroy(daftarPlayerGameobjects[otherPlayer.ActorNumber].gameObject);
         daftarPlayerGameobjects.Remove(otherPlayer.ActorNumber);
 
-        if (PhotonNetwork.LocalPlayer.IsMasterClient)
+        // Periksa ulang apakah master client dan jumlah pemain penuh
+        if (PhotonNetwork.LocalPlayer.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount < PhotonNetwork.CurrentRoom.MaxPlayers)
         {
-            TombolMulaiGame.SetActive(true);
+            TombolMulaiGame.SetActive(false); // Sembunyikan tombol jika pemain keluar dan room belum penuh
         }
     }
 
@@ -264,7 +255,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
             Debug.Log("Nama room tidak valid! Harap masukkan nama room yang benar.");
         }
     }
-    
+
     //Button Join Random
     public void OnJoinRandomRoomButtonClicked()
     {
@@ -368,8 +359,6 @@ public class LobbyManager : MonoBehaviourPunCallbacks
 
         ActivatePanel(DaftarRoomPanel.name);
     }
-
-
 
     void ClearRoomListView()
     {
