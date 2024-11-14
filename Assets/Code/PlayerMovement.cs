@@ -21,6 +21,7 @@ public class PlayerMovement : MonoBehaviourPun, IPunObservable
     [SerializeField] GameObject teleIcon;
     [SerializeField] GameObject pointAttack;
     [SerializeField] Resurection resurection;
+    
     private GameObject minimapItem;
     private Rigidbody2D rb;
     private GameObject cameraFollow;

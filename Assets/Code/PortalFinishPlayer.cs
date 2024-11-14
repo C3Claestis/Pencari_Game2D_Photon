@@ -36,7 +36,8 @@ public class PortalFinishPlayer : MonoBehaviourPunCallbacks
             // Add this player to the crew order via GameManager
             gameManager.AddPlayerToCrew(PhotonNetwork.LocalPlayer.NickName);  // Add the player's name
 
-            StartCoroutine(gameManager.WaitForPlayerCrewCountIncrease(1));
+            // Send an RPC to start the coroutine on all clients
+            photonView.RPC("StartWaitForPlayerCrewCountIncrease", RpcTarget.AllBuffered, 1);
 
             // Send an RPC to hide this player across all clients
             photonView.RPC("HidePlayer", RpcTarget.AllBuffered, PhotonNetwork.LocalPlayer.ActorNumber);

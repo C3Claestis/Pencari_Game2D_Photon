@@ -24,6 +24,7 @@ public class GameManager : MonoBehaviourPun
     [SerializeField] Text crew2;
     [SerializeField] Text crew3;
     [SerializeField] Text crew4;
+    [SerializeField] GameObject buttonLobby;
 
     [Header("=========== PANEL IMPOSTOR/CREW ============")]
     [SerializeField] GameObject panelCrew;
@@ -33,7 +34,7 @@ public class GameManager : MonoBehaviourPun
     private GameObject[] playersIndex;
     private List<string> crewNames = new List<string>();  // List to hold crew names
     private List<Transform> selectedSpawnPoints = new List<Transform>(); // List of selected spawn points
-    private int maxObjectsToSpawn = 10; // Max number of objects to spawn
+    private int maxObjectsToSpawn = 1; // Max number of objects to spawn
     private int impostorIndex = -1; // Index untuk impostor
     private int objectsSpawned = 0; // Counter untuk objek yang telah di-spawn
     private int playerCrewCount = 0;  // Counter untuk crew yang telah ditambahkan
@@ -62,6 +63,34 @@ public class GameManager : MonoBehaviourPun
 
             // Mulai proses spawn objek secara acak
             StartCoroutine(RandomSpawn());
+        }
+    }
+    void Update()
+    {
+        // Cek apakah ini adalah impostor
+        if (PhotonNetwork.LocalPlayer.TagObject == null) return;  // Pastikan pemain sudah di-spawn
+
+        // Dapatkan semua pemain dengan tag "Player"
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        bool allPlayersKnocked = true; // Asumsikan semua pemain knock
+
+        // Periksa status setiap pemain
+        foreach (GameObject player in players)
+        {
+            PlayerMovement playerMovement = player.GetComponent<PlayerMovement>();
+            if (playerMovement != null && !playerMovement.GetKnock())
+            {
+                allPlayersKnocked = false; // Jika ada satu yang tidak knock, set menjadi false
+                break;
+            }
+        }
+
+        // Jika semua pemain knock dan crewNames memiliki isi, eksekusi RPC_ShowCrewPanel
+        if (allPlayersKnocked && crewNames.Count > 0)
+        {
+            photonView.RPC("RPC_ShowCrewPanel", RpcTarget.AllBuffered, true);
+            // Panggil RPC untuk menampilkan button
+            photonView.RPC("RPC_ActivateLobbyButton", RpcTarget.AllBuffered, true); // Menampilkan button di semua player
         }
     }
 
@@ -317,7 +346,7 @@ public class GameManager : MonoBehaviourPun
 
         // Aktifkan atau nonaktifkan panel impostor berdasarkan parameter
         panelImpostor.SetActive(show);
-        
+
         // Add nameimpostor UI
         GameObject playerIndex = GameObject.FindGameObjectWithTag("Impostor");
         if (playerIndex != null)
@@ -415,6 +444,18 @@ public class GameManager : MonoBehaviourPun
 
         // Update UI text sesuai dengan jumlah crewNames
         UpdateCrewUI();
+    }
+
+    [PunRPC]
+    public void StartWaitForPlayerCrewCountIncrease(int index)
+    {
+        // Start the coroutine to wait for the player crew count to increase on all clients
+        StartCoroutine(WaitForPlayerCrewCountIncrease(index));
+    }
+    [PunRPC]
+    void RPC_ActivateLobbyButton(bool activate)
+    {
+        buttonLobby.SetActive(activate); // Mengaktifkan atau menonaktifkan buttonLobby berdasarkan parameter
     }
     #endregion
 }

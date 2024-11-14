@@ -76,6 +76,11 @@ MonoBehaviour:
   - RPC_IndexCount
   - RPC_FixedIndex
   - RPC_SetIndexCount
+  - RPC_ActivateButtonExit
+  - RPC_SetIsReloadCondition
+  - SetPlayerCrewRPC
+  - StartWaitForPlayerCrewCountIncrease
+  - RPC_ActivateLobbyButton
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1
