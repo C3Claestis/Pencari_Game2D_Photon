@@ -59,7 +59,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         maxPlayerSlider.onValueChanged.AddListener(delegate { UpdateMaxPlayerSliderValue(); });
 
         // Setting awal slider
-        maxPlayerSlider.minValue = 1f;
+        maxPlayerSlider.minValue = 2f;
         maxPlayerSlider.maxValue = 5f; // Slider akan memiliki range 0-100, dan kita akan memetakannya ke max 5 player
         maxPlayerSlider.wholeNumbers = false;
         UpdateMaxPlayerSliderValue();
@@ -126,7 +126,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     {
         // Gunakan nilai integer dari slider (langsung ke int)
         int maxPlayers = (int)maxPlayerSlider.value; // Pastikan langsung menggunakan integer
-        if (maxPlayers == 0) maxPlayers = 1; // Minimal 1 pemain
+        if (maxPlayers == 0) maxPlayers = 2; // Minimal 2 pemain
 
         // Update UI text
         maxPlayerSliderValueText.text = maxPlayers.ToString();
