@@ -16,7 +16,7 @@ public class IndexObjectFixing : MonoBehaviourPun
 
     void Start()
     {
-        indexCount = 1; // Set default value
+        indexCount = 10; // Set default value
         textMeshProUGUI = GetComponent<TextMeshProUGUI>();
         UpdateText(); // Menampilkan teks di awal
     }

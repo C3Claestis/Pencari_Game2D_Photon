@@ -34,7 +34,7 @@ public class GameManager : MonoBehaviourPun
     private GameObject[] playersIndex;
     private List<string> crewNames = new List<string>();  // List to hold crew names
     private List<Transform> selectedSpawnPoints = new List<Transform>(); // List of selected spawn points
-    private int maxObjectsToSpawn = 1; // Max number of objects to spawn
+    private int maxObjectsToSpawn = 10; // Max number of objects to spawn
     private int impostorIndex = -1; // Index untuk impostor
     private int objectsSpawned = 0; // Counter untuk objek yang telah di-spawn
     private int playerCrewCount = 0;  // Counter untuk crew yang telah ditambahkan

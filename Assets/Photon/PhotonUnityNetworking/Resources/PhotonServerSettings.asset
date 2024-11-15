@@ -15,7 +15,7 @@ MonoBehaviour:
   AppSettings:
     AppIdRealtime: 477867e3-564c-4725-804d-ba045ad59b74
     AppIdFusion: 
-    AppIdChat: 
+    AppIdChat: 449f4461-6dcc-453d-bae9-be36614a8b46
     AppIdVoice: 
     AppVersion: 
     UseNameServer: 1
@@ -81,6 +81,7 @@ MonoBehaviour:
   - SetPlayerCrewRPC
   - StartWaitForPlayerCrewCountIncrease
   - RPC_ActivateLobbyButton
+  - RPC_GetMessage
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1
