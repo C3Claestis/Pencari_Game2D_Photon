@@ -370,6 +370,10 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         daftarRoomGameObjects.Clear();
     }
 
+    public void ExitGame()
+    {
+        Application.Quit();
+    }
     //Manager Active Panel
     public void ActivatePanel(string panelToBeActivated)
     {
