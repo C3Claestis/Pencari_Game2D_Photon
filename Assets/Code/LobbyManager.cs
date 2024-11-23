@@ -8,40 +8,46 @@ using UnityEngine.UI;
 public class LobbyManager : MonoBehaviourPunCallbacks
 {
     [Header("Connection Status")]
-    public Text statusKoneksi;
+    [SerializeField] Text statusKoneksi;
 
     [Header("Login UI Panel")]
-    public InputField NamaPlayer;
-    public GameObject PanelLogin;
+    [SerializeField] InputField NamaPlayer;
+    [SerializeField] GameObject PanelLogin;
 
     [Header("Room Panel")]
-    public GameObject RoomPanel;
+    [SerializeField] GameObject RoomPanel;
 
     [Header("Membuat Room Panel")]
-    public GameObject BuatRoomPanel;
-    public InputField NamaRoomInputField;
-    public Slider maxPlayerSlider;
-    public Text maxPlayerSliderValueText;
+    [SerializeField] GameObject BuatRoomPanel;
+    [SerializeField] InputField NamaRoomInputField;
+    [SerializeField] UnityEngine.UI.Slider maxPlayerSlider;
+    [SerializeField] Text maxPlayerSliderValueText;
 
     [Header("Join Room")]
-    public GameObject JoinRoomPanel;
-    public InputField JoinRoomName;
+    [SerializeField] GameObject JoinRoomPanel;
+    [SerializeField] InputField JoinRoomName;
 
     [Header("Game Panel")]
-    public GameObject GamePanel;
-    public Text roomInfoText;
-    public GameObject TombolMulaiGame;
-    public GameObject daftarplayerPrefab;
-    public GameObject daftarplayerContent;
+    [SerializeField] GameObject GamePanel;
+    [SerializeField] Text roomInfoText;
+    [SerializeField] GameObject TombolMulaiGame;
+    [SerializeField] GameObject daftarplayerPrefab;
+    [SerializeField] GameObject daftarplayerContent;
 
 
     [Header("Daftar Room Panel")]
-    public GameObject DaftarRoomPanel;
-    public GameObject daftarEntriRoomPrefab;
-    public GameObject daftarRoomUtamaGameobject;
+    [SerializeField] GameObject DaftarRoomPanel;
+    [SerializeField] GameObject daftarEntriRoomPrefab;
+    [SerializeField] GameObject daftarRoomUtamaGameobject;
 
     [Header("Gabung Room Acak/ Gabung Cepat")]
-    public GameObject RoomAcakPanel;
+    [SerializeField] GameObject RoomAcakPanel;
+
+    [Header("Guide Item")]
+    [SerializeField] ScrollRect scrollView;
+    [SerializeField] RectTransform guideMainMenu;
+    [SerializeField] RectTransform guideSurvivor;
+    [SerializeField] RectTransform guideKiller;
 
     private Dictionary<string, RoomInfo> cachedDaftarRoom;
     private Dictionary<string, GameObject> daftarRoomGameObjects;
@@ -63,6 +69,8 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         maxPlayerSlider.maxValue = 5f; // Slider akan memiliki range 0-100, dan kita akan memetakannya ke max 5 player
         maxPlayerSlider.wholeNumbers = false;
         UpdateMaxPlayerSliderValue();
+
+        scrollView.content = guideMainMenu;
     }
 
     // Update is called once per frame
@@ -315,7 +323,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
             daftarEntriRoomGameobject.transform.localScale = Vector3.one;
             daftarEntriRoomGameobject.transform.Find("NamaRoomText").GetComponent<Text>().text = room.Name;
             daftarEntriRoomGameobject.transform.Find("MaksPlayerText").GetComponent<Text>().text = room.PlayerCount + " / " + room.MaxPlayers;
-            daftarEntriRoomGameobject.transform.Find("TombolGabungRoom").GetComponent<Button>().onClick.AddListener(() => OnJoinRoomButtonClicked(room.Name));
+            daftarEntriRoomGameobject.transform.Find("TombolGabungRoom").GetComponent<UnityEngine.UI.Button>().onClick.AddListener(() => OnJoinRoomButtonClicked(room.Name));
 
             daftarRoomGameObjects.Add(room.Name, daftarEntriRoomGameobject);
 
@@ -374,6 +382,27 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     {
         Application.Quit();
     }
+
+    public void ShowGuide(string guideType)
+    {
+        guideMainMenu.gameObject.SetActive(guideType == "MainMenu");
+        guideSurvivor.gameObject.SetActive(guideType == "Survivor");
+        guideKiller.gameObject.SetActive(guideType == "Killer");
+
+        switch (guideType)
+        {
+            case "MainMenu":
+                scrollView.content = guideMainMenu;
+                break;
+            case "Survivor":
+                scrollView.content = guideSurvivor;
+                break;
+            case "Killer":
+                scrollView.content = guideKiller;
+                break;
+        }
+    }
+
     //Manager Active Panel
     public void ActivatePanel(string panelToBeActivated)
     {
